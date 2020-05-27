@@ -90,7 +90,7 @@ public class DefaultDependencyCollector
 
     private static final int CONFIG_PROP_MAX_EXCEPTIONS_DEFAULT = 50;
 
-    private static final String CONFIG_PROP_MAX_CYCLES = "aether.dependencyCollector.maxCycles";
+    static final String CONFIG_PROP_MAX_CYCLES = "aether.dependencyCollector.maxCycles";
     private static final String CONFIG_PROP_NUM_ARTIFACT_DESCRIPTOR_THREADS = "aether.artifact.descriptor.threads";
     private static final int DEFAULT_NUM_ARTIFACT_DESCRIPTOR_THREADS = 5;
 
@@ -150,23 +150,26 @@ public class DefaultDependencyCollector
     public CollectResult collectDependencies( RepositorySystemSession session, CollectRequest request )
                     throws DependencyCollectionException
     {
-        int numThreads = ConfigUtils.getInteger( session, DEFAULT_NUM_ARTIFACT_DESCRIPTOR_THREADS, 
+        int numThreads = ConfigUtils.getInteger( session, DEFAULT_NUM_ARTIFACT_DESCRIPTOR_THREADS,
                                                  CONFIG_PROP_NUM_ARTIFACT_DESCRIPTOR_THREADS );
         LOGGER.debug( "{} = {} ", CONFIG_PROP_NUM_ARTIFACT_DESCRIPTOR_THREADS, numThreads );
-        ThreadPoolExecutor executor = new ThreadPoolExecutor( numThreads, numThreads, 3L, TimeUnit.SECONDS,
-                                                              new LinkedBlockingQueue<Runnable>(),
-                                                              new WorkerThreadFactory( "artifact-descriptor-resolver" ) );
-        try 
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            numThreads, numThreads, 3L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<Runnable>(),
+            new WorkerThreadFactory( "artifact-descriptor-resolver" )
+        );
+        try
         {
-            return collectDependenciesWithExecutor( session, request, executor );            
+            return collectDependenciesWithExecutor( session, request, executor );
         }
-        finally 
+        finally
         {
             executor.shutdown();
         }
     }
-    
-    private CollectResult collectDependenciesWithExecutor( RepositorySystemSession session, CollectRequest request, ExecutorService executor )
+
+    private CollectResult collectDependenciesWithExecutor( RepositorySystemSession session,
+                                                           CollectRequest request, ExecutorService executor )
         throws DependencyCollectionException
     {
         session = DependencyCollectionUtils.optimizeSession( session );
@@ -184,7 +187,7 @@ public class DefaultDependencyCollector
         context.setDependencies( request.getDependencies() );
         context.setCollectResult( result );
         context.setTrace( trace );
-        
+
         Args args = new Args( session, trace, null, null, context, null, request, executor );
         context.setArgs( args );
 
@@ -205,7 +208,8 @@ public class DefaultDependencyCollector
                         descriptorResult.getRepositories(), true );
             }
             context.setDependencies( mergeDeps( context.getDependencies(), descriptorResult.getDependencies() ) );
-            context.setManagedDependencies( mergeDeps( managedDependencies, descriptorResult.getManagedDependencies() ) );
+            context.setManagedDependencies( mergeDeps( managedDependencies,
+                                                       descriptorResult.getManagedDependencies() ) );
 
             node = new DefaultDependencyNode( root );
             node.setRequestContext( request.getRequestContext() );
@@ -501,8 +505,10 @@ public class DefaultDependencyCollector
             }
             if ( noResult )
             {
-                List<RemoteRepository> repos =
-                        getRemoteRepositories( dc.rangeResult.getRepository( dc.version ), dc.context.getRepositories() );
+                List<RemoteRepository> repos = getRemoteRepositories(
+                    dc.rangeResult.getRepository( dc.version ),
+                    dc.context.getRepositories()
+                );
                 addDependencyNode( dc.args.nodes.top(), dc.relocations, dc.preManaged, dc.rangeResult, dc.version,
                         dc.managedDependency, null, repos, dc.args.request.getRequestContext() );
             }
@@ -625,11 +631,12 @@ public class DefaultDependencyCollector
                 args );
     }
 
-    private Future<ArtifactDescriptorResult> resolveCachedArtifactDescriptor( final DataPool pool,
-                                                                              final ArtifactDescriptorRequest descriptorRequest,
-                                                                              final RepositorySystemSession session,
-                                                                              final Dependency d, final Results results,
-                                                                              final Args args )
+    private Future<ArtifactDescriptorResult> resolveCachedArtifactDescriptor(
+        final DataPool pool,
+        final ArtifactDescriptorRequest descriptorRequest,
+        final RepositorySystemSession session,
+        final Dependency d, final Results results,
+        final Args args )
     {
         final Object key = pool.toKey( descriptorRequest );
         Future<ArtifactDescriptorResult> descriptorResult = pool.getDescriptor( key, descriptorRequest );
